@@ -1,0 +1,121 @@
+---
+title: "PA1"
+author: "Betty"
+date: "1/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Course Project
+
+This project makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day. [download data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip).
+
+## Loading and preprocessing the data
+
+<<<<<<< HEAD
+```{r reading }
+act<- read.csv("activity.csv")
+=======
+```{r reading ,echo=TRUE}
+act<- read.csv("C:/Users/Betty/Documents/activity.csv")
+#act<- read.csv("activity.csv") 
+head(act)
+>>>>>>> Added PA1_template.Rmd file
+```
+
+## Loading required packages
+
+```{r Loading,echo=TRUE}
+library(dplyr)
+library(lattice)
+library(ggplot2)
+
+```
+## What is mean total number of steps taken per day?
+
+```{r Mean, echo=TRUE}
+totalStep<- aggregate(steps~date, act, sum)
+mean_step<- mean(totalStep$steps)
+median_step<- median(totalStep$steps)
+mean_step
+median_step
+```
+## Mean and Median
+The Mean is `r mean_step` and the Median is `r median_step`.
+
+## Histogram - Total number of steps taken per day
+
+```{r Hisogram, echo=TRUE}
+hist(totalStep$steps, ylab = "Number of days", xlab="Total steps per day", main="Total number of steps per day", ylim=c(0, 30), col="lightBlue")
+```
+## What is the average daily activity pattern?
+
+```{r Activity Pattern, echo=TRUE}
+Int<- group_by(act,interval)
+ave_by_int<- summarise(Int, average=mean(steps, na.rm=TRUE))
+ave_df<-as.data.frame(ave_by_int)
+with(ave_df,plot(interval, average, type="l"))
+
+```
+## Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r Average, echo=TRUE}
+
+ave_df$interval[which.max(ave_df$average)]
+
+```
+## Imputing missing values - Total number of missing values in the dataset, the total number of rows with NAs 
+
+```{r missing, echo=TRUE}
+
+missing_total<- sum(is.na(act[,1]))
+         
+```
+## Imputing missing values - New dataset with missing data filling in with mean of average of steps by interval 
+
+```{r impute, echo=TRUE}
+missing<-is.na(act[ ,1]) 
+mean_interval<- mean(ave_df$average)
+act_nomissing<-act
+act_nomissing[missing,1]<-mean_interval
+   
+```
+## histogram of the total number of steps taken each day and the mean and median total number of steps taken per day
+
+```{r Excludemissing, echo=TRUE}
+totalstep_nomissing<- aggregate(steps~date, act_nomissing, sum)
+hist(totalstep_nomissing$steps, ylab = "Number of days", xlab="Total steps per day", main="Total number of steps per day", ylim=c(0, 30), col="lightBlue")
+   
+```
+## Mean and median excludemissing
+```{r Mean_new, echo=TRUE}
+mean_nomissing<- mean(totalstep_nomissing$steps)
+Median_nomissing<- median(totalstep_nomissing$steps)
+mean_nomissing
+Median_nomissing
+```
+## Effect of removing missings
+Removing missing value, mean had no change while median has been changed slightly.
+
+## Differences in activity patterns between weekdays and weekends
+### Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day. 
+```{r Days_diff, echo=TRUE}
+
+act_nomissing$date<- as.Date(act_nomissing$date)
+act_daysDif<-act_nomissing %>%
+   mutate(weekday=ifelse(weekdays(date)=="Saturday" | weekdays(date)=="Sunday" , "weekend", "weekday"))%>%
+    group_by(interval,weekday)%>%
+  summarise(mean=mean(steps))
+
+
+```
+### Make a panel plot containing a time series plot (i.e. \color{red}{\verb|type = "l"|}type="l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
+
+```{r Days_diff2, echo=TRUE}
+act_daysDif_df<-as.data.frame(act_daysDif)
+with(act_daysDif_df,xyplot(mean~interval | weekday, type="l", layout=c(1,2)))
+
+```
